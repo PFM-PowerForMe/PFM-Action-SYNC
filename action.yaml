@@ -1,0 +1,51 @@
+name: 'PFM-Upstream-Sync'
+author: 'PFM-PowerForMe'
+description: '同步仓库.'
+
+branding:
+  icon: refresh-ccw
+  color: orange
+
+inputs:
+  upstream_repo_url:
+    description: '上游仓库地址'
+    required: true
+  upstream_sync_branch:
+    description: '上游仓库分支'
+    required: true
+
+  target_repo_token:
+    description: '目标仓库密钥'
+    required: true
+  target_sync_branch:
+    description: '同步到目标分支'
+    required: false
+    default: 'main'
+  
+  match_tag:
+    description: '需要匹配的版本规则'
+    required: false
+    default: '*'
+  exclude_tag:
+    description: '需要排除匹配后的版本规则'
+    required: false
+
+  update_variable_token:
+    description: '用于更新仓库变量的 GitHub Token (需要 repo 权限)'
+    required: false
+  variable_name:
+    description: '要更新的变量名称'
+    required: false
+    default: 'LATEST_TAG'
+
+outputs:
+  has_new_commits:
+    description: '是否有新的提交'
+  has_match_tags:
+    description: '当有匹配的版本号时输出 true 其它工作可通过判断此参数'
+  tag:
+    description: '传递给其它工作流的版本号'
+
+runs:
+  using: 'node20'
+  main: 'dist/index.js'

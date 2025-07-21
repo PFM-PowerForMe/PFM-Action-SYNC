@@ -1,0 +1,27 @@
+{
+  "name": "pfm-action-sync",
+  "version": "1.0.0",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "npx ncc build src/main.ts -o dist",
+    "start": "rm -rf ~/GITTEST/* && ts-node src/main.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/minimatch": "^5.1.2",
+    "@types/node": "^24.0.12",
+    "@vercel/ncc": "^0.38.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@actions/core": "^1.11.1",
+    "@actions/github": "^6.0.1",
+    "fs": "^0.0.1-security",
+    "minimatch": "^10.0.3",
+    "simple-git": "^3.28.0"
+  }
+}
