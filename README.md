@@ -11,7 +11,7 @@
 ## ✨ 功能特性
 
 *   🔄 **代码同步**：将上游仓库指定分支的代码合并到当前仓库。
-*   🏷️ **Tag 同步**：自动拉取上游 Tag，支持正则匹配 (`match_tag`) 和排除 (`exclude_tag`)。
+*   🏷️ **Tag 同步**：自动拉取上游 Tag，支持通配符匹配 (`match_tag`) 和排除 (`exclude_tag`)。
 *   💾 **变量更新**：检测到新 Tag 时，可自动更新仓库变量（如 `LATEST_TAG`），方便其他工作流调用。
 *   ⚙️ **高度可配**：支持自定义同步分支、Token 以及匹配规则。
 
@@ -77,7 +77,7 @@ jobs:
           
           # Tag 匹配规则
           match_tag: 'v*'  # 匹配 v1.0 格式
-          exclude_tag: ''*beta*,*alpha*,*rc*,*nightly*''         # 排除包含 beta 或 rc 的 Tag
+          exclude_tag: '*beta*,*alpha*,*rc*,*nightly*'         # 排除包含 beta 或 rc 的 Tag
           
           # 变量更新配置
           update_variable_token: ${{ secrets.ACTION_PAT }} # 需要在仓库 Secrets 中配置 PAT
@@ -98,8 +98,8 @@ jobs:
 | `upstream_sync_branch` | ✅ | - | 上游仓库需要同步的分支名。 |
 | `target_repo_token` | ✅ | - | 目标仓库（当前仓库）的 Token，用于推送代码。通常使用 `${{ secrets.GITHUB_TOKEN }}`。 |
 | `target_sync_branch` | ❌ | `main` | 同步到目标仓库的哪个分支。 |
-| `match_tag` | ❌ | `*` | Tag 匹配规则（正则表达式）。例如 `^v` 匹配以 v 开头的标签。 |
-| `exclude_tag` | ❌ | - | Tag 排除规则（正则表达式）。匹配到的 Tag 将被忽略。 |
+| `match_tag` | ❌ | `*` | Tag 匹配规则（通配符，由 minimatch 实现）。例如 `7.*` 匹配 7 开头的版本，`v*` 匹配 v 开头的标签。Tag 按版本号大小比较，`7.1.2` 大于 `7.0.6`，与提交时间无关。 |
+| `exclude_tag` | ❌ | - | Tag 排除规则（通配符，由 minimatch 实现），可用逗号分隔多条，如 `*beta*,*rc*`。命中任一条的 Tag 将被忽略。 |
 | `update_variable_token` | ❌ | - | **新功能**：用于更新仓库变量的 GitHub Token。如果设置，将尝试更新变量。建议使用具有 `repo` 权限的 PAT。 |
 | `variable_name` | ❌ | `LATEST_TAG` | **新功能**：需要更新或创建的仓库变量名称。 |
 

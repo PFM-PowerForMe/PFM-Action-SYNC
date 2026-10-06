@@ -15,7 +15,8 @@ import {
 } from './commit';
 import {
 	getTagList,
-	findTagIndex
+	findTagIndex,
+	compareTagAsc
 } from './tag';
 import {
 	initCONFIG
@@ -135,7 +136,7 @@ async function run() {
 		const exclude_TAG = config.exclude_TAG;
 		if (newTags && newTags.length > 0) {
 			// 先根据 exclude_TAG 过滤不需要的标签
-			let filteredTags = newTags.reverse();
+			let filteredTags = newTags.slice();
 			if (exclude_TAG) {
 				// 将 exclude_TAG 按逗号分隔成数组
 				const excludeTagsArray = exclude_TAG.split(',').map(tag => tag.trim());
@@ -143,8 +144,8 @@ async function run() {
 					!excludeTagsArray.some(excludeTag => minimatch(tag, excludeTag))
 				);
 			}
-			// 然后进行匹配
-			const latestMatchedTag = filteredTags.find(tag => minimatch(tag, match_TAG));
+			// 然后按版本号从新到旧匹配, 第一个命中的就是最新版本
+			const latestMatchedTag = filteredTags.slice().sort(compareTagAsc).reverse().find(tag => minimatch(tag, match_TAG));
 			if (latestMatchedTag) {
 				addStepSummary(`匹配规则 "${match_TAG}" 的最新 tag: ${latestMatchedTag}`);
 				core.info(`匹配规则 "${match_TAG}" 的最新 tag: ${latestMatchedTag}`);

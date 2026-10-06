@@ -47,5 +47,5 @@ outputs:
     description: '传递给其它工作流的版本号'
 
 runs:
-  using: 'node20'
+  using: 'node24'
   main: 'dist/index.js'

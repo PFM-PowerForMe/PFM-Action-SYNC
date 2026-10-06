@@ -36335,14 +36335,14 @@ function run() {
             const exclude_TAG = config.exclude_TAG;
             if (newTags && newTags.length > 0) {
                 // 先根据 exclude_TAG 过滤不需要的标签
-                let filteredTags = newTags.reverse();
+                let filteredTags = newTags.slice();
                 if (exclude_TAG) {
                     // 将 exclude_TAG 按逗号分隔成数组
                     const excludeTagsArray = exclude_TAG.split(',').map(tag => tag.trim());
                     filteredTags = filteredTags.filter(tag => !excludeTagsArray.some(excludeTag => (0, minimatch_1.minimatch)(tag, excludeTag)));
                 }
-                // 然后进行匹配
-                const latestMatchedTag = filteredTags.find(tag => (0, minimatch_1.minimatch)(tag, match_TAG));
+                // 然后按版本号从新到旧匹配, 第一个命中的就是最新版本
+                const latestMatchedTag = filteredTags.slice().sort(tag_1.compareTagAsc).reverse().find(tag => (0, minimatch_1.minimatch)(tag, match_TAG));
                 if (latestMatchedTag) {
                     (0, summary_1.addStepSummary)(`匹配规则 "${match_TAG}" 的最新 tag: ${latestMatchedTag}`);
                     core.info(`匹配规则 "${match_TAG}" 的最新 tag: ${latestMatchedTag}`);
@@ -36452,24 +36452,62 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.compareTagAsc = compareTagAsc;
 exports.getTagList = getTagList;
 exports.findTagIndex = findTagIndex;
+// 拆分 tag 为 核心版本号 + 预发布段: 7.1.2 / 7.1 / v7.1.2-rc1
+function parseTag(tag) {
+    const trimmed = tag.trim().replace(/^[vV]/, '');
+    const versionMatch = trimmed.match(/^(\d+(?:\.\d+)*)(.*)$/);
+    if (!versionMatch) {
+        return {
+            core: null,
+            pre: ''
+        };
+    }
+    return {
+        core: versionMatch[1].split('.').map(Number),
+        pre: versionMatch[2].replace(/^[-_.]/, '')
+    };
+}
+// 版本号升序比较: 7.0.9 < 7.1 < 7.1.2, 预发布版小于同版本号的正式版 (7.1.2-rc1 < 7.1.2)
+function compareTagAsc(a, b) {
+    const tagA = parseTag(a);
+    const tagB = parseTag(b);
+    // 非版本形式的 tag (如 nightly) 排在所有版本号之前
+    if (tagA.core === null || tagB.core === null) {
+        if (tagA.core !== null)
+            return 1;
+        if (tagB.core !== null)
+            return -1;
+        return a < b ? -1 : a > b ? 1 : 0;
+    }
+    const length = Math.max(tagA.core.length, tagB.core.length);
+    for (let i = 0; i < length; i++) {
+        const coreA = tagA.core[i];
+        const coreB = tagB.core[i];
+        if (coreA === undefined)
+            return -1;
+        if (coreB === undefined)
+            return 1;
+        if (coreA !== coreB)
+            return coreA - coreB;
+    }
+    // 核心版本号相同: 正式版大于预发布版 (7.1.2 > 7.1.2-rc1)
+    if (tagA.pre === tagB.pre)
+        return 0;
+    if (tagA.pre === '')
+        return 1;
+    if (tagB.pre === '')
+        return -1;
+    return tagA.pre < tagB.pre ? -1 : 1;
+}
 function getTagList(git) {
     return __awaiter(this, void 0, void 0, function* () {
-        const tagResult = yield git.tags();
-        const tags = tagResult.all;
-        // 获取创建时间并排序
-        const tagsWithDates = yield Promise.all(tags.map((tag) => __awaiter(this, void 0, void 0, function* () {
-            const tagLog = yield git.show([tag]);
-            const dateMatch = tagLog.match(/Date:\s+(.*)/);
-            const date = dateMatch ? new Date(dateMatch[1]) : null;
-            return {
-                tag,
-                date
-            };
-        })));
-        tagsWithDates.sort((a, b) => (a.date && b.date) ? a.date.getTime() - b.date.getTime() : 0);
-        const sortedTags = tagsWithDates.map(({ tag }) => tag);
+        // 只能按版本号排序: 上游同一个批次发布的多个维护分支, 提交时间与版本号高低无关
+        // (例如 7.1.2 的提交时间早于 4.7.37), 按提交时间排序会把 4.7.37 当成最新版本
+        const tags = (yield git.tags()).all;
+        const sortedTags = tags.slice().sort(compareTagAsc);
         const latestTag = sortedTags.length > 0 ? sortedTags[sortedTags.length - 1] : null;
         return {
             latestTag,
