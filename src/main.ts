@@ -197,7 +197,7 @@ async function run() {
 			if (localTags.all.length > 0) {
 				await gitB.tag(['-d', ...localTags.all]);
 				core.info(`已删除本地所有 tag: ${localTags.all.join(', ')}`);
-				await gitB.push(['origin', config.target_BRANCH, '--delete', 'tag', ...localTags.all]);
+				await gitB.push(['origin', '--delete', 'tag', ...localTags.all]);
 				core.info(`已删除目标仓库所有 tag: ${localTags.all}`);
 			}
 			await gitB.fetch('upstream', config.upstream_BRANCH, {

@@ -31446,7 +31446,7 @@ function run() {
                 if (localTags.all.length > 0) {
                     yield gitB.tag(['-d', ...localTags.all]);
                     core.info(`已删除本地所有 tag: ${localTags.all.join(', ')}`);
-                    yield gitB.push(['origin', config.target_BRANCH, '--delete', 'tag', ...localTags.all]);
+                    yield gitB.push(['origin', '--delete', 'tag', ...localTags.all]);
                     core.info(`已删除目标仓库所有 tag: ${localTags.all}`);
                 }
                 yield gitB.fetch('upstream', config.upstream_BRANCH, {
